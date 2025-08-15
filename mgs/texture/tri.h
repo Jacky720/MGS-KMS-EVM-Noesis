@@ -2,7 +2,8 @@
 #include "../common/fileutil.h"
 #include "../../PS2/PS2Textures.h"
 
-struct GsTex0 {
+struct GsTex0
+{
 	uint64_t TBP0 : 14; // Texture Buffer Base Pointer (Address/256)
 	uint64_t TBW : 6; // Texture Buffer Width (Texels/64)
 	uint64_t PSM : 6; // Pixel Storage Format (0 = 32bit RGBA)
@@ -13,11 +14,13 @@ struct GsTex0 {
 	uint64_t CBP : 14; // CLUT Buffer Base Pointer
 	uint64_t CPSM : 4; // CLUT Storage Format
 	uint64_t CSM : 1; // CLUT Storage Mode
-	uint64_t CSA : 5; // CLUT Offset
+	uint64_t CSAX : 1; // CLUT Offset X
+	uint64_t CSAY : 4; // CLUT Offset Y
 	uint64_t CLD : 3; // CLUT Load Control
 };
 
-struct TriHeader {
+struct TriHeader
+{
 	uint32_t pad;
 	int32_t width;
 	int32_t height;
@@ -27,7 +30,8 @@ struct TriHeader {
 	int32_t imageOffset;
 	int32_t clutOffset;
 };
-struct TriInfo {
+struct TriInfo
+{
 	float uOffset;
 	float vOffset;
 	float uScale;
@@ -36,6 +40,7 @@ struct TriInfo {
 	uint32_t pad0;
 	uint32_t pad1;
 	uint32_t pad2;
+	uint32_t padc[8];
 	uint32_t unknownA;
 	uint32_t unknownB;
 	uint32_t unknownC;
@@ -68,14 +73,16 @@ struct TriInfo {
 	uint32_t pad6;
 };
 
-struct TriColour {
+struct TriColour
+{
 	uint8_t r;
 	uint8_t g;
 	uint8_t b;
 	uint8_t a;
 };
 
-class Tri {
+class Tri
+{
 public:
 	Tri(std::string filename);
 	~Tri();

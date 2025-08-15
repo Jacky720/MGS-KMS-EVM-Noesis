@@ -1,6 +1,7 @@
 #include "tri.h"
 
-Tri::Tri(std::string filename) {
+Tri::Tri(std::string filename)
+{
 	std::ifstream fs;
 	this->dataSize = std::filesystem::file_size(filename);
 
@@ -14,34 +15,40 @@ Tri::Tri(std::string filename) {
 	initMemory();
 }
 
-Tri::~Tri() {
+Tri::~Tri()
+{
 	delete[] triData;
 }
 
-bool Tri::containsTexture(uint32_t strcode) {
+bool Tri::containsTexture(uint32_t strcode)
+{
 	return getIdx(strcode) > -1;
 }
 
-uint32_t Tri::getStrcodeAtIndex(int idx) {
+uint32_t Tri::getStrcodeAtIndex(int idx)
+{
 	TriInfo* info = (TriInfo*)&triData[0x20];
 
 	return idx < header->numTexture ? info[idx].strcode : 0;
 }
 
-void Tri::getAllTextures() {
-	for (int i = 0; i < header->numTexture; i++) {
+void Tri::getAllTextures()
+{
+	for (int i = 0; i < header->numTexture; i++)
+	{
 		int size, bpp;
 		uint8_t* texture = getTextureIndexed(i, size);
 		delete[] texture;
 	}
 }
 
-int Tri::getIdx(uint32_t strcode) {
+int Tri::getIdx(uint32_t strcode)
+{
 	TriInfo* info = (TriInfo*)&triData[0x20];
 
-	for (int i = 0; i < header->numTexture; i++) {
-		if (info[i].strcode == strcode)
-			return i;
+	for (int i = 0; i < header->numTexture; i++) 
+	{
+		if (info[i].strcode == strcode) return i;
 	}
 
 	return -1;
@@ -70,24 +77,28 @@ uint8_t* makeTGA(uint8_t* data, int dataSize, int16_t width, int16_t height) {
 	return tga;
 }
 
-void Tri::initMemory() {
+void Tri::initMemory()
+{
 	int width = 64;
-	writeTexPSMCT32(0, 1, 0, 0, width, header->height, 0, &triData[header->imageOffset]); 
-	writeTexPSMCT32(0, 1, 0, 0, width, header->clutHeight, 1, &triData[header->clutOffset]);  
+	writeTexPSMCT32(0, 1, 0, 0, width, header->height, 0, &triData[header->imageOffset]);
+	writeTexPSMCT32(0, 1, 0, 0, width, header->clutHeight, 1, &triData[header->clutOffset]);
 }
 
 uint8_t extendAlpha(uint8_t a) {
-	return uint8_t((a / 80) * 255);
+	return uint8_t((a / 0x80) * 255);
 }
 
-uint8_t* Tri::paintPixels(TriColour* clut, uint8_t* pixels, int width, int height, int maxWidth, int& size, int16_t xOffset, int16_t yOffset) {
+uint8_t* Tri::paintPixels(TriColour* clut, uint8_t* pixels, int width, int height, int maxWidth, int& size, int16_t xOffset, int16_t yOffset)
+{
 	size = width * height * 4;
 	uint8_t* texture = new uint8_t[size];
 	int i = 0;
 
-	for (int y = yOffset; y < yOffset + height; y++) {
+	for (int y = yOffset; y < yOffset + height; y++)
+	{
 
-		for (int x = xOffset; x < xOffset + width; x++) {
+		for (int x = xOffset; x < xOffset + width; x++)
+		{
 			int pixelPos = x + y * maxWidth;
 			int pos = i * 4;
 
@@ -102,12 +113,14 @@ uint8_t* Tri::paintPixels(TriColour* clut, uint8_t* pixels, int width, int heigh
 	return texture;
 }
 
-uint8_t* bpp4to8(uint8_t* src, int& size) {
+uint8_t* bpp4to8(uint8_t* src, int& size)
+{
 	size *= 2;
 	uint8_t* expanded = new uint8_t[size];
 
 	int pos = 0;
-	for (int i = 0; i < size / 2; i++) {
+	for (int i = 0; i < size / 2; i++)
+	{
 		pos = i * 2;
 		expanded[pos + 0] = (src[i] & 0xF0) >> 4;
 		expanded[pos + 1] = src[i] & 0x0F;
@@ -116,17 +129,20 @@ uint8_t* bpp4to8(uint8_t* src, int& size) {
 	return expanded;
 }
 
-void unswizzleClut(uint8_t* clutBuffer) {
+void unswizzleClut(uint8_t* clutBuffer)
+{
 	char temp[32];
 
-	for (int i = 1; i <= 29; i += 4) {
+	for (int i = 1; i <= 29; i += 4)
+	{
 		memcpy(&temp, &clutBuffer[i * 32], 32);
 		memcpy(&clutBuffer[i * 32], &clutBuffer[(i + 1) * 32], 32);
 		memcpy(&clutBuffer[(i + 1) * 32], &temp, 32);
 	}
 }
 
-uint8_t* Tri::getTextureIndexed(int idx, int& size) {
+uint8_t* Tri::getTextureIndexed(int idx, int& size)
+{
 	TriInfo* info = (TriInfo*)&triData[0x20];
 	info = &info[idx];
 
@@ -163,17 +179,20 @@ uint8_t* Tri::getTextureIndexed(int idx, int& size) {
 	}
 
 
-	if ((info->registerInfo2.CPSM == 0) && (info->registerInfo2.CSM == 0)) {
-		readTexPSMCT32(info->registerInfo2.CBP, 1, (int)(info->registerInfo2.CSA * 8), 0, clutWidth, clutHeight, 1, (void*)clutBuffer);
+	if ((info->registerInfo2.CPSM == 0) && (info->registerInfo2.CSM == 0))
+	{
+		readTexPSMCT32(info->registerInfo2.CBP, 1, (int)(info->registerInfo2.CSAX * 8), (int)(info->registerInfo2.CSAY * 2), clutWidth, clutHeight, 1, (void*)clutBuffer);
 		if (info->registerInfo2.PSM == 0x13) unswizzleClut(clutBuffer);
 	}
-	else {
+	else
+	{
 		int dummy = 0;
 	}
 
 	uint8_t* expandedOut = texBuffer;
 
-	if (info->registerInfo2.PSM == 0x14) {
+	if (info->registerInfo2.PSM == 0x14)
+	{
 		expandedOut = bpp4to8(texBuffer, size);
 		delete[] texBuffer;
 	}
@@ -184,7 +203,6 @@ uint8_t* Tri::getTextureIndexed(int idx, int& size) {
 
 	uint8_t* tga = makeTGA(pixels, size, texWidth, texHeight);
 	delete[] pixels;
-
 
 	size += 0x12;
 
